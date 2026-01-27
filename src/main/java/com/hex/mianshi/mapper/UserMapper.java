@@ -1,7 +1,7 @@
 package com.hex.mianshi.mapper;
 
-import com.hex.mianshi.model.entity.User;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.hex.mianshi.model.entity.User;
 
 /**
 * @author DYC666
