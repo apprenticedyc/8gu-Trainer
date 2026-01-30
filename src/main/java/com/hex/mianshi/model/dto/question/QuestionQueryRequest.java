@@ -12,12 +12,12 @@ import java.util.List;
 public class QuestionQueryRequest extends PageRequest implements Serializable {
 
     /**
-     * id
+     * 题目ID（精确匹配）
      */
     private Long id;
 
     /**
-     * id
+     * 排除的题目ID（搜索时排除此ID的题目）
      */
     private Long notId;
 
