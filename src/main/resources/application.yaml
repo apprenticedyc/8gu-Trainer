@@ -47,3 +47,9 @@ knife4j:
         api-rule: package
         api-rule-resources:
           - com.hex.mianshi.controller
+# 京东hotkey配置
+hotkey:
+  app-name: mianshi
+  caffeine-size: 10000
+  push-period: 1000
+  etcd-server: http://localhost:2379
