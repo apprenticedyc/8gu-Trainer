@@ -1,6 +1,12 @@
 package com.hex.mianshi.controller;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.csp.sentinel.Entry;
+import com.alibaba.csp.sentinel.EntryType;
+import com.alibaba.csp.sentinel.SphU;
+import com.alibaba.csp.sentinel.Tracer;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.alibaba.csp.sentinel.slots.block.degrade.DegradeException;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hex.mianshi.annotation.AuthCheck;
 import com.hex.mianshi.common.BaseResponse;
@@ -14,6 +20,7 @@ import com.hex.mianshi.model.dto.question.*;
 import com.hex.mianshi.model.entity.Question;
 import com.hex.mianshi.model.entity.User;
 import com.hex.mianshi.model.vo.QuestionVO;
+import com.hex.mianshi.sentinel.SentinelConstant;
 import com.hex.mianshi.servcie.QuestionService;
 import com.hex.mianshi.servcie.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -166,6 +173,63 @@ public class QuestionController {
         Page<Question> questionPage = questionService.listQuestionByPage(questionQueryRequest);
         // 获取封装类
         return ResultUtils.success(questionService.getQuestionVOPage(questionPage, request));
+    }
+
+    /**
+     * 分页获取题目列表（限流版）
+     *
+     * @param questionQueryRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/list/page/vo/sentinel")
+    public BaseResponse<Page<QuestionVO>> listQuestionVOByPageSentinel(
+            @RequestBody QuestionQueryRequest questionQueryRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(questionQueryRequest == null, ErrorCode.PARAMS_ERROR);
+        long size = questionQueryRequest.getPageSize();
+        // 限制爬虫
+        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        // 基于 IP 限流
+        String remoteAddr = request.getRemoteAddr();
+        Entry entry = null;
+        try {
+            // 1. 定义资源
+            entry = SphU.entry(SentinelConstant.listQuestionVOByPage, EntryType.IN, 1, remoteAddr);
+            // 2. 被保护的业务逻辑:
+            // 查询数据库
+            Page<Question> questionPage = questionService.listQuestionByPage(questionQueryRequest);
+            if (1==1){
+                throw  new BusinessException(ErrorCode.PARAMS_ERROR);
+            }
+            // 获取封装类
+            return ResultUtils.success(questionService.getQuestionVOPage(questionPage, request));
+        } catch (Throwable ex) {
+            // 3. sentinel规则异常处理:
+            // 统计业务异常并上报 用于熔断条件的异常率统计
+            if (!BlockException.isBlockException(ex)) {
+                Tracer.trace(ex);
+                return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "系统错误");
+            }
+            // 熔断触发 执行降级兜底
+            if (ex instanceof DegradeException) {
+                return handleFallback(questionQueryRequest, request, ex);
+            }
+            // 限流触发 直接返回空
+            return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "访问过于频繁，请稍后再试");
+        } finally {
+            if (entry != null) {
+                entry.exit(1, remoteAddr);
+            }
+        }
+    }
+
+    /**
+     * listQuestionVOByPageSentinel 降级操作：直接返回本地数据
+     */
+    public BaseResponse<Page<QuestionVO>> handleFallback(@RequestBody QuestionQueryRequest questionQueryRequest,
+                                                         HttpServletRequest request, Throwable ex) {
+        // 返回本地数据或空数据
+        return ResultUtils.success(null);
     }
 
     /**

@@ -1,5 +1,9 @@
 package com.hex.mianshi.controller;
 
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.alibaba.csp.sentinel.slots.block.degrade.DegradeException;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowException;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hex.mianshi.annotation.AuthCheck;
 import com.hex.mianshi.common.BaseResponse;
@@ -188,8 +192,7 @@ public class QuestionBankController {
         long current = questionBankQueryRequest.getCurrent();
         long size = questionBankQueryRequest.getPageSize();
         // 查询数据库
-        Page<QuestionBank> questionBankPage = questionBankService.page(new Page<>(current, size),
-                questionBankService.getQueryWrapper(questionBankQueryRequest));
+        Page<QuestionBank> questionBankPage = questionBankService.page(new Page<>(current, size), questionBankService.getQueryWrapper(questionBankQueryRequest));
         return ResultUtils.success(questionBankPage);
     }
 
@@ -201,18 +204,50 @@ public class QuestionBankController {
      * @return
      */
     @PostMapping("/list/page/vo")
+    @SentinelResource(value = "listQuestionBankVOByPage", blockHandler = "handleBlockException", fallback = "handleFallback")
     public BaseResponse<Page<QuestionBankVO>> listQuestionBankVOByPage(
-            @RequestBody QuestionBankQueryRequest questionBankQueryRequest,
-            HttpServletRequest request) {
+            @RequestBody QuestionBankQueryRequest questionBankQueryRequest, HttpServletRequest request) {
         long current = questionBankQueryRequest.getCurrent();
         long size = questionBankQueryRequest.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
         // 查询数据库
-        Page<QuestionBank> questionBankPage = questionBankService.page(new Page<>(current, size),
-                questionBankService.getQueryWrapper(questionBankQueryRequest));
+        Page<QuestionBank> questionBankPage = questionBankService.page(new Page<>(current, size), questionBankService.getQueryWrapper(questionBankQueryRequest));
         // 获取封装类
         return ResultUtils.success(questionBankService.getQuestionBankVOPage(questionBankPage, request));
+    }
+
+    /**
+     * listQuestionBankVOByPage sentinel配置规则异常(触发限流、熔断阈值) 处理方法
+     */
+    public BaseResponse<Page<QuestionBankVO>> handleBlockException(
+            @RequestBody QuestionBankQueryRequest questionBankQueryRequest, HttpServletRequest request,
+            BlockException ex) {
+        //  1. 触发熔断规则
+        if (ex instanceof DegradeException) {
+            // 熔断规则触发日志（打印异常信息、请求简要标识，方便排查）
+            log.warn("【Sentinel 熔断触发】请求被异常率熔断规则拦截，异常信息：{}，请求参数：{}", ex.getMessage());
+            // 调用降级处理逻辑
+            return handleFallback(questionBankQueryRequest, request, ex);
+        } else if (ex instanceof FlowException) {
+            // 2. 触发限流规则
+            log.info("【Sentinel 限流触发】请求被QPS限流规则拦截，异常信息：{}，请求路径：{}", ex.getMessage());
+        } else {
+            // 其他BlockException（如授权规则）
+            log.error("【Sentinel 未知规则拦截】请求被未预期的规则拦截，异常类型：{}，异常信息：{}", ex.getClass()
+                    .getSimpleName(), ex.getMessage());
+        }
+        // 限流操作
+        return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "系统繁忙，请耐心等待");
+    }
+
+    /**
+     * listQuestionBankVOByPage 接口的降级兜底方法：直接返回本地数据
+     */
+    public BaseResponse<Page<QuestionBankVO>> handleFallback(
+            @RequestBody QuestionBankQueryRequest questionBankQueryRequest, HttpServletRequest request, Throwable ex) {
+        // 可以返回本地数据或空数据
+        return ResultUtils.success(null);
     }
 
     /**
@@ -224,8 +259,7 @@ public class QuestionBankController {
      */
     @PostMapping("/my/list/page/vo")
     public BaseResponse<Page<QuestionBankVO>> listMyQuestionBankVOByPage(
-            @RequestBody QuestionBankQueryRequest questionBankQueryRequest,
-            HttpServletRequest request) {
+            @RequestBody QuestionBankQueryRequest questionBankQueryRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(questionBankQueryRequest == null, ErrorCode.PARAMS_ERROR);
         // 补充查询条件，只查询当前登录用户的数据
         User loginUser = userService.getLoginUser(request);
@@ -235,8 +269,7 @@ public class QuestionBankController {
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
         // 查询数据库
-        Page<QuestionBank> questionBankPage = questionBankService.page(new Page<>(current, size),
-                questionBankService.getQueryWrapper(questionBankQueryRequest));
+        Page<QuestionBank> questionBankPage = questionBankService.page(new Page<>(current, size), questionBankService.getQueryWrapper(questionBankQueryRequest));
         // 获取封装类
         return ResultUtils.success(questionBankService.getQuestionBankVOPage(questionBankPage, request));
     }

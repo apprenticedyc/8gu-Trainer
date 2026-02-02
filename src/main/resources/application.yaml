@@ -18,6 +18,11 @@ spring:
     multipart:
       # 大小限制
       max-file-size: 10MB
+  # sentinel配置
+  cloud:
+    sentinel:
+      transport:
+        dashboard: localhost:8131  # Sentinel 控制台地址
 server:
   address: 0.0.0.0
   port: 8123
