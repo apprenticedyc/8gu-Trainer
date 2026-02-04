@@ -572,7 +572,7 @@ mvn spring-boot:run
 
 ## ⭐ Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=mianshi/mianshi-backend&type=Date)](https://star-history.com/#mianshi/mianshi-backend&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=apprenticedyc/8gu-Trainer&type=Date)](https://star-history.com/#apprenticedyc/8gu-Trainer&Date)
 
 ---
 
