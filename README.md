@@ -10,9 +10,9 @@
 
 ### **高效刷题，助力技术面试**
 
-[![Star History Chart](https://img.shields.io/github/stars/mianshi/mianshi-backend?style=social)](https://github.com/mianshi/mianshi-backend)
-[![Forks](https://img.shields.io/github/forks/mianshi/mianshi-backend?style=social)](https://github.com/mianshi/mianshi-backend/network)
-[![Issues](https://img.shields.io/github/issues/mianshi/mianshi-backend)](https://github.com/mianshi/mianshi-backend/issues)
+[![Star History Chart](https://img.shields.io/github/stars/apprenticedyc/8gu-Trainer?style=social)](https://github.com/apprenticedyc/8gu-Trainer)
+[![Forks](https://img.shields.io/github/forks/apprenticedyc/8gu-Trainer?style=social)](https://github.com/apprenticedyc/8gu-Trainer/network)
+[![Issues](https://img.shields.io/github/issues/apprenticedyc/8gu-Trainer)](https://github.com/apprenticedyc/8gu-Trainer/issues)
 
 [项目简介](#-项目简介) • [核心功能](#-核心功能) • [技术架构](#-技术架构) • [快速开始](#-快速开始)  • [API文档](#-API文档) • [项目亮点](#-项目亮点) • [贡献指南](#-贡献指南)
 
